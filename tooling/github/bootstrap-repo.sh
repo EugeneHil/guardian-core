@@ -6,16 +6,19 @@
 #
 # Rulesets: `develop` forces squash + linear history; `main` allows merge
 # commits so release PRs (develop -> main) never make the branches drift.
-# Usage: <warden-core>/tooling/github/bootstrap-repo.sh <name> "<description>"
+# Optional trailing arguments are extra required status checks appended to the
+# default `gitleaks` check in every ruleset.
+# Usage: <warden-core>/tooling/github/bootstrap-repo.sh <name> "<description>" [check ...]
 set -euo pipefail
 
-if [ $# -ne 2 ]; then
-  echo "usage: $0 <name> \"<description>\"" >&2
+if [ $# -lt 2 ]; then
+  echo "usage: $0 <name> \"<description>\" [check ...]" >&2
   exit 2
 fi
 
 name=$1
 description=$2
+shift 2
 here=$(CDPATH='' cd -- "$(dirname "$0")" && pwd -P)
 login=$(gh api user -q .login)
 repo="$login/$name"
@@ -59,9 +62,9 @@ for file in "$here"/ruleset-*.json; do
   rs_name=$(python3 -I -B -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$file")
   id=$(ruleset_id "$rs_name")
   if [ -n "$id" ]; then
-    gh api -X PUT "repos/$repo/rulesets/$id" --input "$file" >/dev/null
+    python3 -I -B "$here/with_checks.py" "$file" "$@" | gh api -X PUT "repos/$repo/rulesets/$id" --input - >/dev/null
   else
-    gh api -X POST "repos/$repo/rulesets" --input "$file" >/dev/null
+    python3 -I -B "$here/with_checks.py" "$file" "$@" | gh api -X POST "repos/$repo/rulesets" --input - >/dev/null
   fi
 done
 

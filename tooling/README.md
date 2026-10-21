@@ -6,7 +6,7 @@ Everything in `tooling/` is authored here once and copied into `warden-macos` an
 |---|---|
 | `claude/guard.py` | Claude Code PreToolUse hook: blocks secret-file access (incl. globs, variables, substitutions, interpreter code), commits/pushes on `main`/`develop` (also via `git -C`, `bash -c`, `+ref`, `HEAD:main`), force push, `--no-verify`/`-n`/`core.hooksPath`, and edits to itself and `.claude/settings*.json`. Fails closed; runs on the stock macOS Python 3.9. Best-effort: it is a seatbelt against agent mistakes, not a sandbox. |
 | `repo/` | Templates: `.gitignore` base, pre-commit config, gitleaks config, PR template, `CLAUDE.md` base. |
-| `github/` | Rulesets (`ruleset-develop.json`: squash + linear history; `ruleset-main.json`: merge commits allowed so release PRs do not drift), gitleaks workflow, Dependabot config, idempotent `bootstrap-repo.sh`. |
+| `github/` | Rulesets (`ruleset-develop.json`: squash + linear history; `ruleset-main.json`: merge commits allowed so release PRs do not drift), gitleaks workflow, Dependabot config, idempotent `bootstrap-repo.sh <name> "<description>" [check ...]` (extra checks are appended to the default `gitleaks` required check in both rulesets via `with_checks.py`). |
 
 ## Secret guards — verified
 
