@@ -16,3 +16,13 @@ Warden — lightweight Endpoint DLP for macOS. Design: `warden-macos/docs/superp
 ## Guard hook
 
 `tooling/claude/guard.py` runs before every Read/Edit/Write/Bash call and enforces the secret and branch rules above. Do not disable it. Tests: `python3 -I -B -m unittest discover -s tooling/claude`.
+
+## Build & test
+
+C++17 core, CMake ≥ 3.25 with presets (`macos`, `windows`, `linux` — the linux preset is unverified, `coverage`).
+
+- Build and test: `cmake --preset macos && cmake --build --preset macos && ctest --preset macos --output-on-failure`
+- Lint (clang-format + clang-tidy): `scripts/lint.sh` — must be clean.
+- Coverage: `scripts/coverage.sh` — gate is ≥ 90 % line coverage.
+- Sources: `include/warden/` (public API), `src/`, tests in `tests/*_test.cpp` (GoogleTest, picked up by glob); shared helpers in `tests/test_support.hpp`.
+- Warnings are errors; the only dependency besides GoogleTest is nlohmann/json (parser only).
