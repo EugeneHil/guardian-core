@@ -1,6 +1,6 @@
 # warden-core
 
-Cross‑platform C++17 rule engine of **Warden**, a lightweight Endpoint DLP, shared by the macOS agent and the Windows server. Also hosts the shared repository tooling (`tooling/`); design tokens are planned (coming in a following PR).
+Cross‑platform C++17 rule engine of **Warden**, a lightweight Endpoint DLP, shared by the macOS agent and the Windows server. Also hosts the shared repository tooling (`tooling/`); shared design tokens (`design-tokens/`) are available.
 
 Design: [warden-macos/docs/superpowers/specs/2026-10-20-warden-design.md](https://github.com/EugeneHil/warden-macos/blob/develop/docs/superpowers/specs/2026-10-20-warden-design.md)
 
@@ -83,6 +83,18 @@ flowchart LR
 - `Engine` expects policies that were validated by `parsePolicy`; hand-built policies are not re-validated.
 - `std::bad_alloc` can propagate from the parser and the engine.
 
+## Design tokens
+
+`design-tokens/tokens.json` is the single source of truth for colors (light and dark), typography, spacing and radii. `design-tokens/generate.py` (Python 3.9+, stdlib only) renders it into `design-tokens/generated/tokens.css` and `design-tokens/generated/Tokens.swift` (Swift 6, SwiftUI and AppKit).
+
+```sh
+python3 -I -B design-tokens/generate.py            # regenerate both files in place
+python3 -I -B design-tokens/generate.py --check    # write nothing; exit 1 if a file is stale or missing
+python3 -I -B design-tokens/generate.py --css out/tokens.css --swift out/Tokens.swift
+```
+
+Consumers (`warden-macos`, `warden-server`) copy `tokens.json` or point `--tokens` at it, regenerate into their own tree with `--css` / `--swift`, and commit the result. Their CI re-runs `generate.py --check` with the same paths to ensure the committed copies match `tokens.json`. Colors are written as `#RRGGBB` and normalised to upper case.
+
 ## Roadmap
 
 - Case-insensitive matching
@@ -90,4 +102,3 @@ flowchart LR
 - Content-based rules
 - Linux in CI
 - Richer matchers
-- Design tokens, coming in a following PR

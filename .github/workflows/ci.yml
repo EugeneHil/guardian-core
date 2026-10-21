@@ -37,3 +37,15 @@ jobs:
         run: cmake --build --preset windows
       - name: Test
         run: ctest --preset windows
+
+  tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Test
+        run: python3 -I -B -m unittest discover -s design-tokens/tests
+      - name: Freshness check
+        run: python3 -I -B design-tokens/generate.py --check
