@@ -3,8 +3,12 @@
 #include <initializer_list>
 #include <limits>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
+#include <vector>
+#include <warden/glob.hpp>
 #include <warden/policy_parser.hpp>
 
 namespace warden {
@@ -129,6 +133,9 @@ class Collector {
       }
       std::string text;
       if (readString(*found, childPath(path, name), text)) {
+        if (text.empty()) {
+          add(childPath(path, name), "empty value");
+        }
         field = std::move(text);
       }
     };
@@ -136,6 +143,18 @@ class Collector {
     readOptional("signingId", out.signingId);
     readOptional("signingIdPrefix", out.signingIdPrefix);
     readOptional("path", out.path);
+    if (!out.teamId && !out.signingId && !out.signingIdPrefix && !out.path &&
+        !hasKnownField(value)) {
+      add(path, "empty matcher");
+    }
+    if (out.path && !out.path->empty() && out.path->front() != '/') {
+      add(childPath(path, "path"), "must be absolute");
+    }
+  }
+
+  static bool hasKnownField(const Json& object) {
+    return object.contains("teamId") || object.contains("signingId") ||
+           object.contains("signingIdPrefix") || object.contains("path");
   }
 
   void parseTargets(const Json& value, const std::string& path, Rule& out) {
@@ -148,9 +167,15 @@ class Collector {
       add(targetsPath, "expected array");
       return;
     }
+    if (targets->empty()) {
+      add(targetsPath, "no targets");
+    }
     for (std::size_t i = 0; i < targets->size(); ++i) {
       std::string target;
       if (readString((*targets)[i], indexPath(targetsPath, i), target)) {
+        if (const std::optional<std::string> problem = globError(target)) {
+          add(indexPath(targetsPath, i), *problem);
+        }
         out.targets.push_back(std::move(target));
       }
     }
@@ -183,10 +208,21 @@ class Collector {
       add(processesPath, "expected array");
       return;
     }
+    if (processes->empty()) {
+      add(processesPath, "no processes");
+    }
     for (std::size_t i = 0; i < processes->size(); ++i) {
       ProcessMatcher matcher;
       parseMatcher((*processes)[i], indexPath(processesPath, i), matcher);
       out.processes.push_back(std::move(matcher));
+    }
+  }
+
+  void checkId(const std::string& id, const std::string& path) {
+    if (id.empty()) {
+      add(path, "empty id");
+    } else if (!seenIds_.insert(id).second) {
+      add(path, "duplicate id '" + id + "'");
     }
   }
 
@@ -196,8 +232,9 @@ class Collector {
     }
     rejectUnknown(value, path, {"id", "description", "targets", "action", "processes"});
 
-    if (const Json* id = required(value, "id", path)) {
-      readString(*id, childPath(path, "id"), out.id);
+    const Json* id = required(value, "id", path);
+    if (id != nullptr && readString(*id, childPath(path, "id"), out.id)) {
+      checkId(out.id, childPath(path, "id"));
     }
     if (const auto found = value.find("description"); found != value.end()) {
       readString(*found, childPath(path, "description"), out.description);
@@ -221,11 +258,17 @@ class Collector {
           add("schemaVersion", "expected integer");
         } else {
           policy.schemaVersion = static_cast<int>(number);
+          if (number != 1) {
+            add("schemaVersion",
+                "unsupported schema version " + std::to_string(number) + " (expected 1)");
+          }
         }
       }
     }
-    if (const Json* version = required(root, "version", "")) {
-      readInteger(*version, "version", policy.version);
+    const Json* version = required(root, "version", "");
+    if (version != nullptr && readInteger(*version, "version", policy.version) &&
+        policy.version < 0) {
+      add("version", "must be >= 0");
     }
     if (const Json* rules = required(root, "rules", "")) {
       if (!rules->is_array()) {
@@ -246,6 +289,7 @@ class Collector {
 
  private:
   std::vector<ValidationError> errors_;
+  std::unordered_set<std::string> seenIds_;
 };
 
 ParseResult failure(std::string message) {

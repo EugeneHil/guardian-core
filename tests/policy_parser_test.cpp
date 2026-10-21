@@ -133,7 +133,7 @@ TEST(PolicyParser, RejectsSchemaVersionOutOfIntRange) {
 
 TEST(PolicyParser, ReportsRuleFieldErrors) {
   ParseResult result = parsePolicy(
-      ruleWith(R"({"id":5,"description":1,"targets":["a",2],"action":"deny","processes":[3]})"));
+      ruleWith(R"({"id":5,"description":1,"targets":["/a",2],"action":"deny","processes":[3]})"));
   EXPECT_FALSE(result.ok());
   EXPECT_TRUE(hasError(result, "rules[0].id", "expected string"));
   EXPECT_TRUE(hasError(result, "rules[0].description", "expected string"));
@@ -154,8 +154,8 @@ TEST(PolicyParser, ReportsMissingRuleFieldsAndNonObjectRule) {
 }
 
 TEST(PolicyParser, RejectsUnsupportedAction) {
-  ParseResult result =
-      parsePolicy(ruleWith(R"({"id":"r","targets":[],"action":"allow","processes":[]})"));
+  ParseResult result = parsePolicy(
+      ruleWith(R"({"id":"r","targets":["/a"],"action":"allow","processes":[{"teamId":"X"}]})"));
   EXPECT_FALSE(result.ok());
   ASSERT_EQ(result.errors.size(), 1U);
   EXPECT_EQ(describe(result.errors[0]),
@@ -164,7 +164,7 @@ TEST(PolicyParser, RejectsUnsupportedAction) {
 
 TEST(PolicyParser, ReportsMatcherFieldTypes) {
   ParseResult result = parsePolicy(ruleWith(
-      R"({"id":"r","targets":[],"action":"deny","processes":[{"teamId":1,"path":"/x"}]})"));
+      R"({"id":"r","targets":["/a"],"action":"deny","processes":[{"teamId":1,"path":"/x"}]})"));
   EXPECT_FALSE(result.ok());
   ASSERT_EQ(result.errors.size(), 1U);
   EXPECT_EQ(describe(result.errors[0]), "rules[0].processes[0].teamId: expected string");
@@ -172,8 +172,8 @@ TEST(PolicyParser, ReportsMatcherFieldTypes) {
 
 TEST(PolicyParser, CollectsErrorsAcrossRules) {
   ParseResult result = parsePolicy(
-      ruleWith(R"({"id":1,"targets":[],"action":"deny","processes":[]},)"
-               R"({"id":"b","targets":[],"action":"deny","processes":[{"teamId":false}]})"));
+      ruleWith(R"({"id":1,"targets":["/a"],"action":"deny","processes":[{"teamId":"X"}]},)"
+               R"({"id":"b","targets":["/a"],"action":"deny","processes":[{"teamId":false}]})"));
   EXPECT_FALSE(result.ok());
   EXPECT_FALSE(result.policy.has_value());
   EXPECT_TRUE(hasError(result, "rules[0].id", "expected string"));
@@ -188,14 +188,14 @@ TEST(PolicyParser, RejectsUnknownKeys) {
   EXPECT_EQ(root.errors[0].path, "extra");
   EXPECT_EQ(root.errors[0].message, "unknown field 'extra'");
 
-  ParseResult matcher = parsePolicy(
-      ruleWith(R"({"id":"r","targets":[],"action":"deny","processes":[{"teamID":"X"}]})"));
+  ParseResult matcher = parsePolicy(ruleWith(
+      R"({"id":"r","targets":["/a"],"action":"deny","processes":[{"teamId":"X","teamID":"X"}]})"));
   EXPECT_FALSE(matcher.ok());
   ASSERT_EQ(matcher.errors.size(), 1U);
   EXPECT_EQ(describe(matcher.errors[0]), "rules[0].processes[0]: unknown field 'teamID'");
 
-  ParseResult rule = parsePolicy(
-      ruleWith(R"({"id":"r","targets":[],"action":"deny","processes":[],"bogus":null})"));
+  ParseResult rule = parsePolicy(ruleWith(
+      R"({"id":"r","targets":["/a"],"action":"deny","processes":[{"teamId":"X"}],"bogus":null})"));
   ASSERT_EQ(rule.errors.size(), 1U);
   EXPECT_EQ(describe(rule.errors[0]), "rules[0]: unknown field 'bogus'");
 }
