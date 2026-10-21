@@ -61,14 +61,14 @@ def load_tokens(path: str) -> dict:
         entries = _check_object(root[group], group)
         for name, value in entries.items():
             where = "%s.%s" % (group, name)
-            if not NAME_RE.match(name):
+            if not NAME_RE.fullmatch(name):
                 raise ValueError("%s: name is not lowerCamelCase" % where)
             if group == "color":
                 color = _check_object(value, where)
                 _check_exact_keys(color, ["light", "dark"], where)
                 for mode in ("light", "dark"):
                     hex_value = color[mode]
-                    if not isinstance(hex_value, str) or not HEX_RE.match(hex_value):
+                    if not isinstance(hex_value, str) or not HEX_RE.fullmatch(hex_value):
                         raise ValueError("%s.%s: invalid hex %r" % (where, mode, hex_value))
                     color[mode] = hex_value.upper()
             elif group == "typography":

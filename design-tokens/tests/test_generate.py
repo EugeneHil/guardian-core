@@ -70,6 +70,23 @@ class LoadTokensTests(unittest.TestCase):
         self.assertIn("color.background.light", str(ctx.exception))
         self.assertIn("#GGGGGG", str(ctx.exception))
 
+    def test_load_rejects_trailing_newline_in_hex(self):
+        data = copy.deepcopy(FIXTURE)
+        data["color"]["background"]["light"] = "#FFFFFF\n"
+        with self.assertRaises(ValueError) as ctx:
+            load_dict(data)
+        self.assertIn("color.background.light", str(ctx.exception))
+
+    def test_load_rejects_trailing_newline_in_names(self):
+        for group, value in (("color", {"light": "#FFFFFF", "dark": "#000000"}),
+                             ("spacing", 5), ("radius", 5),
+                             ("typography", {"size": 12, "weight": 400})):
+            data = copy.deepcopy(FIXTURE)
+            data[group]["md\n"] = value
+            with self.assertRaises(ValueError, msg=group) as ctx:
+                load_dict(data)
+            self.assertIn("%s.md" % group, str(ctx.exception))
+
     def test_load_rejects_non_camel_case_name(self):
         data = copy.deepcopy(FIXTURE)
         data["spacing"]["Big_one"] = 5
