@@ -156,4 +156,39 @@ TEST(PolicyValidation, StructuralAndSemanticErrorsCombine) {
             (Messages{"rules[0]: unknown field 'bogus'", "rules[0].id: empty id"}));
 }
 
+TEST(PolicyValidation, RejectsNonCanonicalMatcherPaths) {
+  for (const char* path : {"/usr/bin/../bin/curl", "/usr/bin//scp", "/tmp/exfil", "/usr/bin/curl/",
+                           "/usr/./bin/curl", "/var/x", "/etc/y"}) {
+    const ParseResult result = parsePolicy(policyJson(
+        ruleJson("r", kTargets, "deny", std::string(R"([{"path":")") + path + R"("}])")));
+    EXPECT_FALSE(result.ok()) << path;
+    EXPECT_EQ(described(result),
+              Messages{"rules[0].processes[0].path: must be canonical (no '.', '..', '//', "
+                       "trailing '/', or /tmp, /var, /etc alias prefix)"})
+        << path;
+  }
+}
+
+TEST(PolicyValidation, AcceptsCanonicalMatcherPaths) {
+  for (const char* path : {"/usr/bin/python3", "/private/tmp/exfil", "/"}) {
+    const ParseResult result = parsePolicy(policyJson(
+        ruleJson("r", kTargets, "deny", std::string(R"([{"path":")") + path + R"("}])")));
+    EXPECT_TRUE(result.ok()) << path;
+  }
+}
+
+TEST(PolicyValidation, MisspelledMatcherFieldReportsUnknownAndEmpty) {
+  const ParseResult result =
+      parsePolicy(policyJson(ruleJson("r", kTargets, "deny", R"([{"teamID":"X"}])")));
+  EXPECT_FALSE(result.ok());
+  EXPECT_EQ(described(result), (Messages{"rules[0].processes[0]: unknown field 'teamID'",
+                                         "rules[0].processes[0]: empty matcher"}));
+}
+
+TEST(PolicyValidation, SameKeysInSiblingObjectsAreNotDuplicates) {
+  const ParseResult result = parsePolicy(policyJson(goodRule("a") + "," + goodRule("b")));
+  EXPECT_TRUE(result.ok());
+}
+
+
 }  // namespace

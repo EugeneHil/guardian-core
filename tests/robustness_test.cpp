@@ -148,13 +148,16 @@ TEST(Robustness, PrefilterIsSoundOverCorpus) {
   int denies = 0;
   for (const Policy& policy : policies) {
     const Engine engine(policy);
+    int policyDenies = 0;
     for (const std::string& path : corpus) {
       const auto decision = engine.evaluate(makeRequest(path, process));
       if (decision.verdict == Verdict::Deny) {
         ++denies;
+        ++policyDenies;
         EXPECT_TRUE(engine.isPotentiallyProtected(path)) << "path: '" << path << "'";
       }
     }
+    EXPECT_GT(policyDenies, 0) << "every policy must exercise the Deny branch";
   }
   EXPECT_GT(denies, 20) << "corpus must exercise the Deny branch";
 }

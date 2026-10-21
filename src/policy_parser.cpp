@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 #include <warden/glob.hpp>
+#include <warden/path.hpp>
 #include <warden/policy_parser.hpp>
 
 namespace warden {
@@ -149,6 +150,10 @@ class Collector {
     }
     if (out.path && !out.path->empty() && out.path->front() != '/') {
       add(childPath(path, "path"), "must be absolute");
+    } else if (out.path && !out.path->empty() && !isCanonicalPath(*out.path)) {
+      add(childPath(path, "path"),
+          "must be canonical (no '.', '..', '//', trailing '/', or /tmp, /var, /etc alias "
+          "prefix)");
     }
   }
 
