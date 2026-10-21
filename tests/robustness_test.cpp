@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstddef>
 #include <random>
 #include <string>
@@ -160,6 +161,37 @@ TEST(Robustness, PrefilterIsSoundOverCorpus) {
     EXPECT_GT(policyDenies, 0) << "every policy must exercise the Deny branch";
   }
   EXPECT_GT(denies, 20) << "corpus must exercise the Deny branch";
+}
+
+TEST(Robustness, LargePolicyParsesInLinearTime) {
+  std::string json = R"({"schemaVersion":1,"version":1,"rules":[)";
+  for (int i = 0; i < 60000; ++i) {
+    if (i != 0) {
+      json += ',';
+    }
+    json += R"({"id":"r)" + std::to_string(i) +
+            R"(","targets":["**/a"],"action":"deny","processes":[{"teamId":"X"}]})";
+  }
+  json += "]}";
+  const auto start = std::chrono::steady_clock::now();
+  const auto result = parsePolicy(json);
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+  EXPECT_TRUE(result.ok());
+  EXPECT_LT(elapsed, std::chrono::seconds(4));
+}
+
+TEST(Robustness, LongKeyWithManyNestedObjectsIsFast) {
+  std::string json =
+      R"({"schemaVersion":1,"version":1,"rules":[],")" + std::string(300000, 'k') + R"(":[)";
+  for (int i = 0; i < 20000; ++i) {
+    json += i == 0 ? "{}" : ",{}";
+  }
+  json += "]}";
+  const auto start = std::chrono::steady_clock::now();
+  const auto result = parsePolicy(json);
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+  EXPECT_FALSE(result.ok());  // unknown field
+  EXPECT_LT(elapsed, std::chrono::seconds(3));
 }
 
 TEST(Robustness, RandomisedGarbageNeverThrows) {

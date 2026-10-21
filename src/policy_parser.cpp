@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -299,30 +298,34 @@ class Collector {
   std::unordered_set<std::string> seenIds_;
 };
 
-/// Records duplicate object keys (nlohmann keeps the last one) while the document is parsed.
-class DuplicateKeyFinder {
+/// SAX handler that records duplicate object keys (the DOM parse keeps the last one). Linear
+/// time: error paths are formatted lazily, only when a duplicate is found.
+class DuplicateKeyFinder : public Json::json_sax_t {
  public:
-  bool operator()(int /*depth*/, Json::parse_event_t event, Json& parsed) {
-    switch (event) {
-      case Json::parse_event_t::object_start:
-        open(true);
-        break;
-      case Json::parse_event_t::array_start:
-        open(false);
-        break;
-      case Json::parse_event_t::key:
-        onKey(parsed.get_ref<const std::string&>());
-        break;
-      case Json::parse_event_t::object_end:
-      case Json::parse_event_t::array_end:
-        if (!frames_.empty()) {
-          frames_.pop_back();
-        }
-        break;
-      case Json::parse_event_t::value:
-        advance();
-        break;
+  bool null() override { return child(); }
+  bool boolean(bool /*value*/) override { return child(); }
+  bool number_integer(Json::number_integer_t /*value*/) override { return child(); }
+  bool number_unsigned(Json::number_unsigned_t /*value*/) override { return child(); }
+  bool number_float(Json::number_float_t /*value*/, const std::string& /*text*/) override {
+    return child();
+  }
+  bool string(std::string& /*value*/) override { return child(); }
+  bool binary(Json::binary_t& /*value*/) override { return child(); }
+  bool start_object(std::size_t /*size*/) override { return open(true); }
+  bool end_object() override { return close(); }
+  bool start_array(std::size_t /*size*/) override { return open(false); }
+  bool end_array() override { return close(); }
+  bool parse_error(std::size_t /*position*/, const std::string& /*token*/,
+                   const Json::exception& /*error*/) override {
+    return false;
+  }
+
+  bool key(std::string& name) override {
+    Frame& frame = frames_.back();
+    if (!frame.keys.insert(name).second) {
+      errors_.push_back(ValidationError{objectPath(), "duplicate key '" + name + "'"});
     }
+    frame.key = name;
     return true;
   }
 
@@ -331,47 +334,43 @@ class DuplicateKeyFinder {
  private:
   struct Frame {
     bool isObject = false;
-    std::string path;
-    std::string pendingKey;
-    std::size_t index = 0;
+    std::string key;        // current key (objects)
+    std::size_t count = 0;  // children started so far (arrays)
     std::unordered_set<std::string> keys;
   };
 
-  /// Path of the next child value of the innermost container.
-  std::string nextChildPath() {
-    if (frames_.empty()) {
-      return {};
-    }
-    Frame& parent = frames_.back();
-    return parent.isObject ? childPath(parent.path, parent.pendingKey)
-                           : indexPath(parent.path, parent.index);
-  }
-
-  void open(bool isObject) {
-    Frame frame;
-    frame.isObject = isObject;
-    frame.path = nextChildPath();
-    advance();
-    frames_.push_back(std::move(frame));
-  }
-
-  /// A child value of the innermost container has started or completed.
-  void advance() {
+  /// A value starts in the innermost container.
+  bool child() {
     if (!frames_.empty() && !frames_.back().isObject) {
-      ++frames_.back().index;
+      ++frames_.back().count;
     }
+    return true;
   }
 
-  void onKey(const std::string& key) {
-    if (frames_.empty()) {
-      return;
+  bool open(bool isObject) {
+    child();
+    frames_.emplace_back();
+    frames_.back().isObject = isObject;
+    return true;
+  }
+
+  bool close() {
+    frames_.pop_back();
+    return true;
+  }
+
+  /// Path of the innermost object, built from the chain of enclosing frames.
+  [[nodiscard]] std::string objectPath() const {
+    std::string path;
+    for (std::size_t i = 0; i + 1 < frames_.size(); ++i) {
+      const Frame& frame = frames_[i];
+      if (frame.isObject) {
+        path = childPath(path, frame.key);
+      } else {
+        path = indexPath(path, frame.count - 1);
+      }
     }
-    Frame& frame = frames_.back();
-    frame.pendingKey = key;
-    if (!frame.keys.insert(key).second) {
-      errors_.push_back(
-          ValidationError{frame.path.empty() ? "$" : frame.path, "duplicate key '" + key + "'"});
-    }
+    return path.empty() ? "$" : path;
   }
 
   std::vector<Frame> frames_;
@@ -393,7 +392,8 @@ ParseResult parsePolicy(std::string_view json) {
   Json root;
   DuplicateKeyFinder duplicates;
   try {
-    root = Json::parse(json.begin(), json.end(), std::ref(duplicates), true, false);
+    root = Json::parse(json.begin(), json.end(), nullptr, true, false);
+    Json::sax_parse(json.begin(), json.end(), &duplicates, Json::input_format_t::json, true, false);
   } catch (const Json::exception& error) {
     return failure(std::string("invalid JSON: ") + error.what());
   }
