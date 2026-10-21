@@ -2,8 +2,12 @@
 // functions with counting versions, so this is a plain executable (no GoogleTest).
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
 #include <new>
 #include <string>
 #include <utility>
@@ -30,15 +34,31 @@ void* countedAllocNoThrow(std::size_t size) noexcept {
 
 void* countedAlignedAlloc(std::size_t size, std::align_val_t alignment) {
   g_allocations.fetch_add(1, std::memory_order_relaxed);
-  void* ptr = nullptr;
   std::size_t align = static_cast<std::size_t>(alignment);
   if (align < sizeof(void*)) {
     align = sizeof(void*);
   }
-  if (posix_memalign(&ptr, align, size == 0 ? 1 : size) != 0) {
+  const std::size_t bytes = size == 0 ? 1 : size;
+#ifdef _MSC_VER
+  void* ptr = _aligned_malloc(bytes, align);
+  if (ptr == nullptr) {
     throw std::bad_alloc();
   }
+#else
+  void* ptr = nullptr;
+  if (posix_memalign(&ptr, align, bytes) != 0) {
+    throw std::bad_alloc();
+  }
+#endif
   return ptr;
+}
+
+void freeAligned(void* ptr) noexcept {
+#ifdef _MSC_VER
+  _aligned_free(ptr);
+#else
+  std::free(ptr);
+#endif
 }
 
 }  // namespace
@@ -64,10 +84,10 @@ void operator delete(void* ptr, std::size_t) noexcept { std::free(ptr); }
 void operator delete[](void* ptr, std::size_t) noexcept { std::free(ptr); }
 void operator delete(void* ptr, const std::nothrow_t&) noexcept { std::free(ptr); }
 void operator delete[](void* ptr, const std::nothrow_t&) noexcept { std::free(ptr); }
-void operator delete(void* ptr, std::align_val_t) noexcept { std::free(ptr); }
-void operator delete[](void* ptr, std::align_val_t) noexcept { std::free(ptr); }
-void operator delete(void* ptr, std::size_t, std::align_val_t) noexcept { std::free(ptr); }
-void operator delete[](void* ptr, std::size_t, std::align_val_t) noexcept { std::free(ptr); }
+void operator delete(void* ptr, std::align_val_t) noexcept { freeAligned(ptr); }
+void operator delete[](void* ptr, std::align_val_t) noexcept { freeAligned(ptr); }
+void operator delete(void* ptr, std::size_t, std::align_val_t) noexcept { freeAligned(ptr); }
+void operator delete[](void* ptr, std::size_t, std::align_val_t) noexcept { freeAligned(ptr); }
 
 namespace {
 
@@ -86,6 +106,22 @@ warden::Policy makePolicy() {
 }
 
 }  // namespace
+
+struct alignas(64) OverAligned {
+  char data[64];
+};
+
+// Exercises the aligned new/delete replacements so that mismatched allocators would crash.
+bool overAlignedRoundTrip() {
+  const std::size_t before = g_allocations.load();
+  OverAligned* single = new OverAligned();
+  OverAligned* many = new OverAligned[2]();
+  const bool aligned = reinterpret_cast<std::uintptr_t>(single) % 64 == 0 &&
+                       reinterpret_cast<std::uintptr_t>(many) % 64 == 0;
+  delete single;
+  delete[] many;
+  return aligned && g_allocations.load() > before;
+}
 
 int main() {
   const warden::Engine engine(makePolicy());
@@ -117,6 +153,11 @@ int main() {
   before = g_allocations.load();
   result = engine.isPotentiallyProtected(longPath);
   check("long", before, g_allocations.load(), result, false);
+
+  if (!overAlignedRoundTrip()) {
+    std::fprintf(stderr, "FAIL over-aligned round trip\n");
+    ++failures;
+  }
 
   return failures == 0 ? 0 : 1;
 }
