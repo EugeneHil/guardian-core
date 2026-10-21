@@ -11,7 +11,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(Warnings)
 include(Dependencies)
 
-add_library(warden_core STATIC src/version.cpp)
+add_library(warden_core STATIC src/path.cpp src/version.cpp)
 add_library(warden::core ALIAS warden_core)
 target_include_directories(warden_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_features(warden_core PUBLIC cxx_std_17)
