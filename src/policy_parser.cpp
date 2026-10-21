@@ -1,10 +1,12 @@
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -297,6 +299,85 @@ class Collector {
   std::unordered_set<std::string> seenIds_;
 };
 
+/// Records duplicate object keys (nlohmann keeps the last one) while the document is parsed.
+class DuplicateKeyFinder {
+ public:
+  bool operator()(int /*depth*/, Json::parse_event_t event, Json& parsed) {
+    switch (event) {
+      case Json::parse_event_t::object_start:
+        open(true);
+        break;
+      case Json::parse_event_t::array_start:
+        open(false);
+        break;
+      case Json::parse_event_t::key:
+        onKey(parsed.get_ref<const std::string&>());
+        break;
+      case Json::parse_event_t::object_end:
+      case Json::parse_event_t::array_end:
+        if (!frames_.empty()) {
+          frames_.pop_back();
+        }
+        break;
+      case Json::parse_event_t::value:
+        advance();
+        break;
+    }
+    return true;
+  }
+
+  std::vector<ValidationError> take() { return std::move(errors_); }
+
+ private:
+  struct Frame {
+    bool isObject = false;
+    std::string path;
+    std::string pendingKey;
+    std::size_t index = 0;
+    std::unordered_set<std::string> keys;
+  };
+
+  /// Path of the next child value of the innermost container.
+  std::string nextChildPath() {
+    if (frames_.empty()) {
+      return {};
+    }
+    Frame& parent = frames_.back();
+    return parent.isObject ? childPath(parent.path, parent.pendingKey)
+                           : indexPath(parent.path, parent.index);
+  }
+
+  void open(bool isObject) {
+    Frame frame;
+    frame.isObject = isObject;
+    frame.path = nextChildPath();
+    advance();
+    frames_.push_back(std::move(frame));
+  }
+
+  /// A child value of the innermost container has started or completed.
+  void advance() {
+    if (!frames_.empty() && !frames_.back().isObject) {
+      ++frames_.back().index;
+    }
+  }
+
+  void onKey(const std::string& key) {
+    if (frames_.empty()) {
+      return;
+    }
+    Frame& frame = frames_.back();
+    frame.pendingKey = key;
+    if (!frame.keys.insert(key).second) {
+      errors_.push_back(
+          ValidationError{frame.path.empty() ? "$" : frame.path, "duplicate key '" + key + "'"});
+    }
+  }
+
+  std::vector<Frame> frames_;
+  std::vector<ValidationError> errors_;
+};
+
 ParseResult failure(std::string message) {
   ParseResult result;
   result.errors.push_back(ValidationError{"$", std::move(message)});
@@ -310,8 +391,9 @@ ParseResult parsePolicy(std::string_view json) {
     return failure("nesting too deep");
   }
   Json root;
+  DuplicateKeyFinder duplicates;
   try {
-    root = Json::parse(json.begin(), json.end(), nullptr, true, false);
+    root = Json::parse(json.begin(), json.end(), std::ref(duplicates), true, false);
   } catch (const Json::exception& error) {
     return failure(std::string("invalid JSON: ") + error.what());
   }
@@ -319,10 +401,12 @@ ParseResult parsePolicy(std::string_view json) {
   Collector collector;
   Policy policy = collector.parseRoot(root);
   ParseResult result;
-  if (collector.empty()) {
+  result.errors = duplicates.take();
+  for (ValidationError& error : collector.take()) {
+    result.errors.push_back(std::move(error));
+  }
+  if (result.errors.empty()) {
     result.policy = std::move(policy);
-  } else {
-    result.errors = collector.take();
   }
   return result;
 }

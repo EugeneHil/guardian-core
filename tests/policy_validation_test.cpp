@@ -185,10 +185,27 @@ TEST(PolicyValidation, MisspelledMatcherFieldReportsUnknownAndEmpty) {
                                          "rules[0].processes[0]: empty matcher"}));
 }
 
+TEST(PolicyValidation, RejectsDuplicateRootKeys) {
+  const ParseResult result =
+      parsePolicy(R"({"schemaVersion":1,"version":1,"rules":[],"rules":[],"version":2})");
+  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result.policy.has_value());
+  EXPECT_EQ(described(result),
+            (Messages{"$: duplicate key 'rules'", "$: duplicate key 'version'"}));
+}
+
+TEST(PolicyValidation, RejectsDuplicateKeysInRuleAndMatcher) {
+  const std::string rule = R"({"id":"r","targets":["**/a"],"targets":["**/b"],"action":"deny",)"
+                           R"("processes":[{"teamId":"X","teamId":"Y"}]})";
+  const ParseResult result = parsePolicy(policyJson(rule));
+  EXPECT_FALSE(result.ok());
+  EXPECT_EQ(described(result), (Messages{"rules[0]: duplicate key 'targets'",
+                                         "rules[0].processes[0]: duplicate key 'teamId'"}));
+}
+
 TEST(PolicyValidation, SameKeysInSiblingObjectsAreNotDuplicates) {
   const ParseResult result = parsePolicy(policyJson(goodRule("a") + "," + goodRule("b")));
   EXPECT_TRUE(result.ok());
 }
-
 
 }  // namespace
