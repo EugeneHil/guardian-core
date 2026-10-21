@@ -39,7 +39,8 @@ jobs:
         run: ctest --preset windows
 
   tokens:
-    runs-on: ubuntu-latest
+    # Pinned: Python 3.9 availability via setup-python on future ubuntu-latest images is not guaranteed.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
