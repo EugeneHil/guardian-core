@@ -169,7 +169,7 @@ class Collector {
     if (text == "deny") {
       out.action = Action::Deny;
     } else {
-      add(actionPath, "unsupported action '" + text + "'");
+      add(actionPath, "unsupported action '" + text + "' (expected 'deny')");
     }
   }
 

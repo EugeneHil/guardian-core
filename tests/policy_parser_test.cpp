@@ -158,7 +158,8 @@ TEST(PolicyParser, RejectsUnsupportedAction) {
       parsePolicy(ruleWith(R"({"id":"r","targets":[],"action":"allow","processes":[]})"));
   EXPECT_FALSE(result.ok());
   ASSERT_EQ(result.errors.size(), 1U);
-  EXPECT_EQ(describe(result.errors[0]), "rules[0].action: unsupported action 'allow'");
+  EXPECT_EQ(describe(result.errors[0]),
+            "rules[0].action: unsupported action 'allow' (expected 'deny')");
 }
 
 TEST(PolicyParser, ReportsMatcherFieldTypes) {
