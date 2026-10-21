@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  cpp-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: brew install ninja llvm
+      - name: Configure
+        run: cmake --preset macos
+      - name: Build
+        run: cmake --build --preset macos
+      - name: Test
+        run: ctest --preset macos
+      - name: Lint
+        run: scripts/lint.sh
+      - name: Coverage
+        run: scripts/coverage.sh
+
+  cpp-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        run: cmake --preset windows
+      - name: Build
+        run: cmake --build --preset windows
+      - name: Test
+        run: ctest --preset windows
+
+  tokens:
+    # Pinned: Python 3.9 availability via setup-python on future ubuntu-latest images is not guaranteed.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Test
+        run: python3 -I -B -m unittest discover -s design-tokens/tests
+      - name: Freshness check
+        run: python3 -I -B design-tokens/generate.py --check
