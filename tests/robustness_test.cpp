@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <random>
@@ -163,9 +164,9 @@ TEST(Robustness, PrefilterIsSoundOverCorpus) {
   EXPECT_GT(denies, 20) << "corpus must exercise the Deny branch";
 }
 
-TEST(Robustness, LargePolicyParsesInLinearTime) {
+std::string manyRulesPolicy(int count) {
   std::string json = R"({"schemaVersion":1,"version":1,"rules":[)";
-  for (int i = 0; i < 60000; ++i) {
+  for (int i = 0; i < count; ++i) {
     if (i != 0) {
       json += ',';
     }
@@ -173,11 +174,27 @@ TEST(Robustness, LargePolicyParsesInLinearTime) {
             R"(","targets":["**/a"],"action":"deny","processes":[{"teamId":"X"}]})";
   }
   json += "]}";
-  const auto start = std::chrono::steady_clock::now();
-  const auto result = parsePolicy(json);
-  const auto elapsed = std::chrono::steady_clock::now() - start;
-  EXPECT_TRUE(result.ok());
-  EXPECT_LT(elapsed, std::chrono::seconds(4));
+  return json;
+}
+
+/// Best of `runs` parses, in seconds.
+double bestParseSeconds(const std::string& json, int runs) {
+  double best = 1e9;
+  for (int run = 0; run < runs; ++run) {
+    const auto start = std::chrono::steady_clock::now();
+    const auto result = parsePolicy(json);
+    const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start;
+    EXPECT_TRUE(result.ok());
+    best = std::min(best, elapsed.count());
+  }
+  return best;
+}
+
+// Scale-invariant: 4x the rules must cost about 4x (linear), not 16x (quadratic).
+TEST(Robustness, LargePolicyParsesInLinearTime) {
+  const double small = std::max(bestParseSeconds(manyRulesPolicy(1000), 3), 0.001);
+  const double large = bestParseSeconds(manyRulesPolicy(4000), 2);
+  EXPECT_LT(large, 7.0 * small) << "small=" << small << "s large=" << large << "s";
 }
 
 TEST(Robustness, LongKeyWithManyNestedObjectsIsFast) {
