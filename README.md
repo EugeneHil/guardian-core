@@ -1,6 +1,6 @@
 # warden-core
 
-Cross‑platform C++17 rule engine of **Warden**, a lightweight Endpoint DLP, shared by the macOS agent and the Windows server. Also hosts the design tokens and the shared repository tooling (`tooling/`).
+Cross‑platform C++17 rule engine of **Warden**, a lightweight Endpoint DLP, shared by the macOS agent and the Windows server. Also hosts the shared repository tooling (`tooling/`); design tokens are planned (coming in a following PR).
 
 Design: [warden-macos/docs/superpowers/specs/2026-10-20-warden-design.md](https://github.com/EugeneHil/warden-macos/blob/develop/docs/superpowers/specs/2026-10-20-warden-design.md)
 
@@ -60,7 +60,7 @@ flowchart LR
 
 ## Public API
 
-- `parsePolicy(json)` parses and validates a policy document. It reports every error found as a `ValidationError` (a JSON-path style `path` such as `$.rules[0].targets[1]` plus a `message`), never throws except `std::bad_alloc`, and returns a `Policy` only when there are no errors. Input nested deeper than 64 levels is rejected with `$: nesting too deep`. `describe(error)` formats an error as `<path>: <message>`.
+- `parsePolicy(json)` parses and validates a policy document. It reports every error found as a `ValidationError` (a `path` such as `rules[0].targets[1]` plus a `message`; `$` is used only for document-level errors, and an unknown root-level key is reported at the key name), never throws except `std::bad_alloc`, and returns a `Policy` only when there are no errors. Duplicate object keys are errors (`<object path or $>: duplicate key '<k>'`). Input nested deeper than 64 levels is rejected with `$: nesting too deep`. `describe(error)` formats an error as `<path>: <message>`.
 - `Engine(Policy)` is an immutable evaluator and safe to share across threads. `evaluate(request)` normalizes the file path, then returns the first rule that denies, as `Decision{Verdict::Deny, ruleId}`. Otherwise it returns `Verdict::Allow` with an empty `ruleId`. A free `evaluate(policy, request)` is equivalent.
 - `Engine::isPotentiallyProtected(path)` is a conservative, allocation-free, `noexcept` prefilter: it never returns `false` for a path that `evaluate` could deny, but may return `true` for paths that end up allowed.
 - `matchesProcess`, `normalizePath`, `isCanonicalPath`, `expandTarget`, `globMatch` and `globError` expose the building blocks.
@@ -76,8 +76,10 @@ flowchart LR
 ## Known limitations
 
 - Matching is case-sensitive.
-- `~` covers `/Users/*` only (not `/var/root`).
-- Duplicate JSON object keys are accepted and the last one wins.
+- `~` covers `/Users/*` only (not `/var/root`); it also matches `/Users/Shared`.
+- Targets whose first segment is a wildcard (such as `/*/secret`) never match alias paths like `/tmp/secret`, whose canonical form is `/private/tmp/...`.
+- Process matcher `path` values must be canonical (no `.`, `..`, `//`, trailing `/`, or `/tmp`, `/var`, `/etc` alias prefix); use `/private/tmp/...` form.
+- The free `evaluate()` copies and recompiles the `Policy` on every call; use `Engine` in hot paths.
 - `Engine` expects policies that were validated by `parsePolicy`; hand-built policies are not re-validated.
 - `std::bad_alloc` can propagate from the parser and the engine.
 
