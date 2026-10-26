@@ -1,13 +1,13 @@
 #include <algorithm>
 #include <cstddef>
+#include <guardian/engine.hpp>
+#include <guardian/glob.hpp>
+#include <guardian/path.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <guardian/engine.hpp>
-#include <guardian/glob.hpp>
-#include <guardian/path.hpp>
 
 namespace guardian {
 

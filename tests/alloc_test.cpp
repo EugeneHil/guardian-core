@@ -8,11 +8,11 @@
 #ifdef _MSC_VER
 #include <malloc.h>
 #endif
+#include <guardian/engine.hpp>
+#include <guardian/policy.hpp>
 #include <new>
 #include <string>
 #include <utility>
-#include <guardian/engine.hpp>
-#include <guardian/policy.hpp>
 
 namespace {
 

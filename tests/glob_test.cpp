@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <guardian/glob.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <guardian/glob.hpp>
 
 namespace {
 

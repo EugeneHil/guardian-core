@@ -1,5 +1,8 @@
 #include <cstddef>
 #include <cstdint>
+#include <guardian/glob.hpp>
+#include <guardian/path.hpp>
+#include <guardian/policy_parser.hpp>
 #include <initializer_list>
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -9,9 +12,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <guardian/glob.hpp>
-#include <guardian/path.hpp>
-#include <guardian/policy_parser.hpp>
 
 namespace guardian {
 

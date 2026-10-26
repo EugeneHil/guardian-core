@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <guardian/path.hpp>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <guardian/path.hpp>
 
 namespace {
 

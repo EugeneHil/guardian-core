@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <guardian/policy_parser.hpp>
 #include <string>
 #include <utility>
 #include <vector>
-#include <guardian/policy_parser.hpp>
 
 namespace {
 

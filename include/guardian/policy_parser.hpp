@@ -1,10 +1,10 @@
 #pragma once
 
+#include <guardian/policy.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <guardian/policy.hpp>
 
 namespace guardian {
 

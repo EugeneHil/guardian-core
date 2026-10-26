@@ -1,9 +1,9 @@
 #pragma once
 
+#include <guardian/policy.hpp>
 #include <optional>
 #include <string>
 #include <utility>
-#include <guardian/policy.hpp>
 
 namespace guardian {
 

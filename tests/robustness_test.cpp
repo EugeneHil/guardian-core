@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <guardian/engine.hpp>
+#include <guardian/policy.hpp>
+#include <guardian/policy_parser.hpp>
 #include <random>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <guardian/engine.hpp>
-#include <guardian/policy.hpp>
-#include <guardian/policy_parser.hpp>
 
 #include "test_support.hpp"
 

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <string>
 #include <guardian/engine.hpp>
 #include <guardian/policy.hpp>
+#include <string>
 
 #include "test_support.hpp"
 
