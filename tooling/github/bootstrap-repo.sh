@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publish a local Warden repo to GitHub as a public repository and apply the
+# Publish a local Guardian repo to GitHub as a public repository and apply the
 # shared protection settings. Idempotent: safe to re-run to update settings and
 # rulesets. Run from the repo root after the bootstrap commit exists on
 # `develop` and a local `main` branch points at it.
@@ -8,7 +8,7 @@
 # commits so release PRs (develop -> main) never make the branches drift.
 # Optional trailing arguments are extra required status checks appended to the
 # default `gitleaks` check in every ruleset.
-# Usage: <warden-core>/tooling/github/bootstrap-repo.sh <name> "<description>" [check ...]
+# Usage: <guardian-core>/tooling/github/bootstrap-repo.sh <name> "<description>" [check ...]
 set -euo pipefail
 
 if [ $# -lt 2 ]; then

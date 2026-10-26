@@ -48,5 +48,7 @@ jobs:
           python-version: '3.9'
       - name: Test
         run: python3 -I -B -m unittest discover -s design-tokens/tests
+      - name: Repository scripts
+        run: python3 -I -B -m unittest discover -s scripts
       - name: Freshness check
         run: python3 -I -B design-tokens/generate.py --check
