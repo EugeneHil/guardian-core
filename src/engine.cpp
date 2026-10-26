@@ -5,11 +5,11 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <warden/engine.hpp>
-#include <warden/glob.hpp>
-#include <warden/path.hpp>
+#include <guardian/engine.hpp>
+#include <guardian/glob.hpp>
+#include <guardian/path.hpp>
 
-namespace warden {
+namespace guardian {
 
 namespace {
 
@@ -98,4 +98,4 @@ Decision evaluate(const Policy& policy, const AccessRequest& request) {
   return Engine(policy).evaluate(request);
 }
 
-}  // namespace warden
+}  // namespace guardian

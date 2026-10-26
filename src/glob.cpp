@@ -1,8 +1,8 @@
-#include "warden/glob.hpp"
+#include "guardian/glob.hpp"
 
 #include <cstddef>
 
-namespace warden {
+namespace guardian {
 
 namespace {
 
@@ -140,4 +140,4 @@ std::optional<std::string> globError(std::string_view target) {
   return std::nullopt;
 }
 
-}  // namespace warden
+}  // namespace guardian

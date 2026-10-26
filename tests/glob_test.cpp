@@ -7,12 +7,12 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <warden/glob.hpp>
+#include <guardian/glob.hpp>
 
 namespace {
 
-using warden::globError;
-using warden::globMatch;
+using guardian::globError;
+using guardian::globMatch;
 
 TEST(Glob, StarStaysInsideSegment) {
   EXPECT_TRUE(globMatch("/a/*.txt", "/a/x.txt"));

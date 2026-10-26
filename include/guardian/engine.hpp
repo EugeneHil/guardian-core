@@ -3,9 +3,9 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <warden/policy.hpp>
+#include <guardian/policy.hpp>
 
-namespace warden {
+namespace guardian {
 
 /// True iff `matcher` has at least one field and every present field is non-empty and matches
 /// `process` (`teamId`/`signingId`/`path` exactly, `signingIdPrefix` as a prefix). An empty
@@ -34,4 +34,4 @@ class Engine {
 /// Equivalent to `Engine(policy).evaluate(request)`.
 Decision evaluate(const Policy& policy, const AccessRequest& request);
 
-}  // namespace warden
+}  // namespace guardian

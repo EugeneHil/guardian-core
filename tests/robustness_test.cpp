@@ -7,23 +7,23 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <warden/engine.hpp>
-#include <warden/policy.hpp>
-#include <warden/policy_parser.hpp>
+#include <guardian/engine.hpp>
+#include <guardian/policy.hpp>
+#include <guardian/policy_parser.hpp>
 
 #include "test_support.hpp"
 
 namespace {
 
-using warden::Engine;
-using warden::makeRequest;
-using warden::makeSpecPolicy;
-using warden::parsePolicy;
-using warden::Policy;
-using warden::ProcessInfo;
-using warden::ProcessMatcher;
-using warden::Rule;
-using warden::Verdict;
+using guardian::Engine;
+using guardian::makeRequest;
+using guardian::makeSpecPolicy;
+using guardian::parsePolicy;
+using guardian::Policy;
+using guardian::ProcessInfo;
+using guardian::ProcessMatcher;
+using guardian::Rule;
+using guardian::Verdict;
 
 ProcessInfo chrome() {
   ProcessInfo info;
@@ -227,7 +227,7 @@ TEST(Robustness, RandomisedGarbageNeverThrows) {
       }
     }
     input.resize(length);
-    warden::ParseResult result;
+    guardian::ParseResult result;
     ASSERT_NO_THROW(result = parsePolicy(input)) << "iteration " << i;
     if (result.ok()) {
       EXPECT_TRUE(result.errors.empty());

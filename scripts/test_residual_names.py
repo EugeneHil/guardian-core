@@ -41,10 +41,10 @@ def is_code_path(path):
 
 GROUPS = {
     "text": Group(PATTERN, is_text_path, True),
-    "code": Group(PATTERN, is_code_path, False),
+    "code": Group(PATTERN, is_code_path, True),
     # Not applicable in warden-core: there is no .gitmodules.
     "submodule": Group(PATTERN, lambda path: False, False),
-    "all": Group(PATTERN, lambda path: True, False),
+    "all": Group(PATTERN, lambda path: True, True),
 }
 
 # Files exempt from a group because they must spell the old name.
@@ -56,8 +56,11 @@ ALLOW = {
     "code": set(),
     "submodule": set(),
     "all": {
+        # Defines the pattern itself.
         "scripts/test_residual_names.py",
+        # Fixture with the old shared-ignores marker.
         "scripts/test_sync_shared.py",
+        # Recognizes the old shared-ignores marker; dropped once all repos are migrated.
         "tooling/sync-shared.sh",
     },
 }

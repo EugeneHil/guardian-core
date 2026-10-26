@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace warden {
+namespace guardian {
 
 /// Lexical normalization: collapses `//`, drops `.`, resolves `..` (never above root),
 /// drops a trailing `/`, and rewrites a leading /tmp, /var or /etc segment to /private/....
@@ -17,4 +17,4 @@ bool isCanonicalPath(std::string_view path) noexcept;
 /// `~` -> `/Users/*`, `~/rest` -> `/Users/*/rest`; everything else is unchanged.
 std::string expandTarget(std::string_view target);
 
-}  // namespace warden
+}  // namespace guardian
