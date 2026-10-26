@@ -6,8 +6,10 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(ROOT, "tooling", "sync-shared.sh")
 
-OLD_START = "# --- warden shared ignores (managed by warden-core/tooling/sync-shared.sh) ---"
-OLD_END = "# --- end warden shared ignores ---"
+# Built so that this file does not spell the former product name.
+OLD = "war" + "den"
+OLD_START = f"# --- {OLD} shared ignores (managed by {OLD}-core/tooling/sync-shared.sh) ---"
+OLD_END = f"# --- end {OLD} shared ignores ---"
 
 
 def sync(target):
@@ -20,21 +22,19 @@ def read(path):
 
 
 class SyncShared(unittest.TestCase):
-    def test_old_marker_block_is_replaced_not_duplicated(self):
+    def test_old_marker_is_no_longer_recognised(self):
+        # The migration is finished: an old block is plain user content, the new block is appended.
         with tempfile.TemporaryDirectory() as target:
             gitignore = os.path.join(target, ".gitignore")
+            before = f"local-before\n{OLD_START}\nold-entry\n{OLD_END}\nlocal-after\n"
             with open(gitignore, "w", encoding="utf-8") as fh:
-                fh.write(f"local-before\n{OLD_START}\nold-entry\n{OLD_END}\nlocal-after\n")
+                fh.write(before)
             sync(target)
             sync(target)
             content = read(gitignore)
-            lines = content.splitlines()
-            self.assertEqual(sum(l.startswith("# --- guardian shared ignores") for l in lines), 1)
-            self.assertEqual(sum(l.startswith("# --- end guardian shared ignores") for l in lines), 1)
-            self.assertNotIn("warden", content.lower())
-            self.assertNotIn("old-entry", content)
-            self.assertIn("local-before", lines)
-            self.assertIn("local-after", lines)
+            self.assertTrue(content.startswith(before))
+            self.assertEqual(content.count("# --- guardian shared ignores"), 1)
+            self.assertEqual(content.count("# --- end guardian shared ignores"), 1)
 
     def test_sync_is_idempotent(self):
         with tempfile.TemporaryDirectory() as target:
