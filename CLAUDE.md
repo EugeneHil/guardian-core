@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Warden — lightweight Endpoint DLP for macOS. Design: `warden-macos/docs/superpowers/specs/2026-10-20-warden-design.md`.
+Guardian — lightweight Endpoint DLP for macOS. Design: `guardian-macos/docs/superpowers/specs/2026-10-20-guardian-design.md`.
 
 ## Rules (non-negotiable)
 
@@ -24,5 +24,5 @@ C++17 core, CMake ≥ 3.25 with presets (`macos`, `windows`, `linux` — the lin
 - Build and test: `cmake --preset macos && cmake --build --preset macos && ctest --preset macos --output-on-failure`
 - Lint (clang-format + clang-tidy): `scripts/lint.sh` — must be clean.
 - Coverage: `scripts/coverage.sh` — gate is ≥ 90 % line coverage.
-- Sources: `include/warden/` (public API), `src/`, tests in `tests/*_test.cpp` (GoogleTest, picked up by glob); shared helpers in `tests/test_support.hpp`.
+- Sources: `include/guardian/` (public API), `src/`, tests in `tests/*_test.cpp` (GoogleTest, picked up by glob); shared helpers in `tests/test_support.hpp`.
 - Warnings are errors; the only dependency besides GoogleTest is nlohmann/json (parser only).

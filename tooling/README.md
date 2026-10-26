@@ -1,6 +1,6 @@
 # Shared tooling
 
-Everything in `tooling/` is authored here once and copied into `warden-macos` and `warden-server` by `tooling/sync-shared.sh <target-repo-dir>` (idempotent).
+Everything in `tooling/` is authored here once and copied into `guardian-macos` and `guardian-server` by `tooling/sync-shared.sh <target-repo-dir>` (idempotent).
 
 | Path | Purpose |
 |---|---|
