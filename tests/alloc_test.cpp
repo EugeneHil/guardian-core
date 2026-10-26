@@ -8,11 +8,11 @@
 #ifdef _MSC_VER
 #include <malloc.h>
 #endif
+#include <guardian/engine.hpp>
+#include <guardian/policy.hpp>
 #include <new>
 #include <string>
 #include <utility>
-#include <warden/engine.hpp>
-#include <warden/policy.hpp>
 
 namespace {
 
@@ -91,13 +91,13 @@ void operator delete[](void* ptr, std::size_t, std::align_val_t) noexcept { free
 
 namespace {
 
-warden::Policy makePolicy() {
-  warden::Policy policy;
+guardian::Policy makePolicy() {
+  guardian::Policy policy;
   for (const char* id : {"r1", "r2"}) {
-    warden::Rule rule;
+    guardian::Rule rule;
     rule.id = id;
     rule.targets = {"**/.env", "~/.ssh/**", "/tmp/secrets/**"};
-    warden::ProcessMatcher matcher;
+    guardian::ProcessMatcher matcher;
     matcher.signingIdPrefix = "com.google.Chrome";
     rule.processes.push_back(matcher);
     policy.rules.push_back(std::move(rule));
@@ -124,7 +124,7 @@ bool overAlignedRoundTrip() {
 }
 
 int main() {
-  const warden::Engine engine(makePolicy());
+  const guardian::Engine engine(makePolicy());
   const std::string protectedPath = "/Users/alice/.ssh/id_rsa";
   const std::string unprotectedPath = "/usr/lib/libc.dylib";
   const std::string longPath = "/" + std::string(4096, 'a') + "/x";

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace warden {
+namespace guardian {
 
 enum class Action : std::uint8_t { Deny };
 
@@ -56,4 +56,4 @@ struct ValidationError {
   std::string message;
 };
 
-}  // namespace warden
+}  // namespace guardian

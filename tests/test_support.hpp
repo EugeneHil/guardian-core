@@ -1,11 +1,11 @@
 #pragma once
 
+#include <guardian/policy.hpp>
 #include <optional>
 #include <string>
 #include <utility>
-#include <warden/policy.hpp>
 
-namespace warden {
+namespace guardian {
 
 inline Policy makeSpecPolicy() {
   Policy policy;
@@ -40,4 +40,4 @@ inline AccessRequest makeRequest(std::string file, ProcessInfo process,
   return request;
 }
 
-}  // namespace warden
+}  // namespace guardian

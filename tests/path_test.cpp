@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <guardian/path.hpp>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <warden/path.hpp>
 
 namespace {
 
@@ -35,15 +35,15 @@ TEST(NormalizePath, Table) {
       {"/tmp/../etc", "/private/etc"},
   };
   for (const auto& [in, want] : cases) {
-    EXPECT_EQ(warden::normalizePath(in), want) << "input: " << in;
+    EXPECT_EQ(guardian::normalizePath(in), want) << "input: " << in;
   }
 }
 
 TEST(NormalizePath, EmbeddedNulIsOrdinaryByte) {
   const std::string in("/a/\0b/../c", 10);
-  EXPECT_EQ(warden::normalizePath(in), "/a/c");
+  EXPECT_EQ(guardian::normalizePath(in), "/a/c");
   const std::string nul("/a/\0b//c", 8);
-  EXPECT_EQ(warden::normalizePath(nul), std::string("/a/\0b/c", 7));
+  EXPECT_EQ(guardian::normalizePath(nul), std::string("/a/\0b/c", 7));
 }
 
 TEST(NormalizePath, VeryLongPathIsIterative) {
@@ -51,30 +51,30 @@ TEST(NormalizePath, VeryLongPathIsIterative) {
   while (in.size() < (1U << 20U)) {
     in += "/ab";
   }
-  EXPECT_EQ(warden::normalizePath(in), in);
+  EXPECT_EQ(guardian::normalizePath(in), in);
   std::string dots;
   while (dots.size() < (1U << 20U)) {
     dots += "/a/..";
   }
-  EXPECT_EQ(warden::normalizePath(dots), "/");
+  EXPECT_EQ(guardian::normalizePath(dots), "/");
 }
 
 TEST(IsCanonicalPath, True) {
-  EXPECT_TRUE(warden::isCanonicalPath("/Users/a/.env"));
-  EXPECT_TRUE(warden::isCanonicalPath("/"));
-  EXPECT_TRUE(warden::isCanonicalPath("/tmpfoo"));
-  EXPECT_TRUE(warden::isCanonicalPath("/private/tmp/x"));
+  EXPECT_TRUE(guardian::isCanonicalPath("/Users/a/.env"));
+  EXPECT_TRUE(guardian::isCanonicalPath("/"));
+  EXPECT_TRUE(guardian::isCanonicalPath("/tmpfoo"));
+  EXPECT_TRUE(guardian::isCanonicalPath("/private/tmp/x"));
 }
 
 TEST(IsCanonicalPath, False) {
   for (std::string_view p : {"", "a/b", "/a//b", "/a/./b", "/a/../b", "/a/", "/tmp/x", "/var",
                              "/etc/hosts", "/tmp", "/a/.", "/a/.."}) {
-    EXPECT_FALSE(warden::isCanonicalPath(p)) << "input: " << p;
+    EXPECT_FALSE(guardian::isCanonicalPath(p)) << "input: " << p;
   }
 }
 
 TEST(IsCanonicalPath, NulIsOrdinaryByte) {
-  EXPECT_TRUE(warden::isCanonicalPath(std::string_view("/a/\0b", 5)));
+  EXPECT_TRUE(guardian::isCanonicalPath(std::string_view("/a/\0b", 5)));
 }
 
 TEST(ExpandTarget, Table) {
@@ -84,7 +84,7 @@ TEST(ExpandTarget, Table) {
       {"~bob/x", "~bob/x"},   {"", ""},
   };
   for (const auto& [in, want] : cases) {
-    EXPECT_EQ(warden::expandTarget(in), want) << "input: " << in;
+    EXPECT_EQ(guardian::expandTarget(in), want) << "input: " << in;
   }
 }
 

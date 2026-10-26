@@ -1,12 +1,12 @@
 #pragma once
 
+#include <guardian/policy.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <warden/policy.hpp>
 
-namespace warden {
+namespace guardian {
 
 /// `policy` has a value iff `errors` is empty.
 struct ParseResult {
@@ -23,4 +23,4 @@ ParseResult parsePolicy(std::string_view json);
 /// "<path>: <message>".
 std::string describe(const ValidationError& error);
 
-}  // namespace warden
+}  // namespace guardian

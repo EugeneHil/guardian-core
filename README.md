@@ -1,16 +1,16 @@
-# warden-core
+# guardian-core
 
-Cross‑platform C++17 rule engine of **Warden**, a lightweight Endpoint DLP, shared by the macOS agent and the Windows server. Also hosts the shared repository tooling (`tooling/`); shared design tokens (`design-tokens/`) are available.
+Cross‑platform C++17 rule engine of **Guardian**, a lightweight Endpoint DLP, shared by the macOS agent and the Windows server. Also hosts the shared repository tooling (`tooling/`); shared design tokens (`design-tokens/`) are available.
 
-Design: [warden-macos/docs/superpowers/specs/2026-10-20-warden-design.md](https://github.com/EugeneHil/warden-macos/blob/develop/docs/superpowers/specs/2026-10-20-warden-design.md)
+Design: [guardian-macos/docs/superpowers/specs/2026-10-20-guardian-design.md](https://github.com/EugeneHil/guardian-macos/blob/develop/docs/superpowers/specs/2026-10-20-guardian-design.md)
 
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `include/warden/` | Public C++17 API: `policy.hpp`, `policy_parser.hpp`, `engine.hpp`, `path.hpp`, `glob.hpp`, `version.hpp` |
-| `src/` | Implementation of the `warden_core` static library |
+| `include/guardian/` | Public C++17 API: `policy.hpp`, `policy_parser.hpp`, `engine.hpp`, `path.hpp`, `glob.hpp`, `version.hpp` |
+| `src/` | Implementation of the `guardian_core` static library |
 | `tests/` | GoogleTest suites (`*_test.cpp`), `alloc_test.cpp` (allocation-free guarantees), `test_support.hpp` |
 | `scripts/` | `lint.sh`, `coverage.sh`, `coverage_gate.py` |
 | `tooling/` | Shared repository tooling (Claude guard hook, GitHub bootstrap and workflows) |
@@ -52,11 +52,11 @@ flowchart LR
     policy --> engine["Engine"]
     request["AccessRequest"] --> engine
     engine --> decision["Decision"]
-    server["warden-server"] -.consumes.-> parse
+    server["guardian-server"] -.consumes.-> parse
     bridge["CoreBridge"] -.consumes.-> engine
 ```
 
-`warden-server` uses the parser and validator; the macOS agent reaches `Engine` through `CoreBridge`.
+`guardian-server` uses the parser and validator; the macOS agent reaches `Engine` through `CoreBridge`.
 
 ## Public API
 
@@ -93,7 +93,7 @@ python3 -I -B design-tokens/generate.py --check    # write nothing; exit 1 if a 
 python3 -I -B design-tokens/generate.py --css out/tokens.css --swift out/Tokens.swift
 ```
 
-Consumers (`warden-macos`, `warden-server`) copy `tokens.json` or point `--tokens` at it, regenerate into their own tree with `--css` / `--swift`, and commit the result. Their CI re-runs `generate.py --check` with the same paths to ensure the committed copies match `tokens.json`. Colors are written as `#RRGGBB` and normalised to upper case.
+Consumers (`guardian-macos`, `guardian-server`) copy `tokens.json` or point `--tokens` at it, regenerate into their own tree with `--css` / `--swift`, and commit the result. Their CI re-runs `generate.py --check` with the same paths to ensure the committed copies match `tokens.json`. Colors are written as `#RRGGBB` and normalised to upper case.
 
 ## Roadmap
 

@@ -14,7 +14,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(nlohmann_json)
 
-if(WARDEN_BUILD_TESTS)
+if(GUARDIAN_BUILD_TESTS)
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_Declare(

@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
+#include <guardian/engine.hpp>
+#include <guardian/policy_parser.hpp>
 #include <string>
-#include <warden/engine.hpp>
-#include <warden/policy_parser.hpp>
 
 #include "test_support.hpp"
 
 namespace {
 
-using warden::describe;
-using warden::parsePolicy;
-using warden::ParseResult;
-using warden::ValidationError;
+using guardian::describe;
+using guardian::parsePolicy;
+using guardian::ParseResult;
+using guardian::ValidationError;
 
 const char* const kSpecJson = R"({
   "schemaVersion": 1,
@@ -52,24 +52,24 @@ TEST(PolicyParser, ParsesSpecExample) {
   ParseResult result = parsePolicy(kSpecJson);
   ASSERT_TRUE(result.ok());
   EXPECT_TRUE(result.errors.empty());
-  const warden::Policy& policy = *result.policy;
+  const guardian::Policy& policy = *result.policy;
   EXPECT_EQ(policy.schemaVersion, 1);
   EXPECT_EQ(policy.version, 3);
   ASSERT_EQ(policy.rules.size(), 1U);
-  const warden::Rule& rule = policy.rules[0];
+  const guardian::Rule& rule = policy.rules[0];
   EXPECT_EQ(rule.id, "secrets-from-browsers-and-ai");
   EXPECT_EQ(rule.targets.size(), 3U);
   ASSERT_EQ(rule.processes.size(), 6U);
   EXPECT_EQ(rule.processes[0].teamId, "EQHXZ8M8AV");
   EXPECT_EQ(rule.processes[5].path, "/usr/bin/python3");
 
-  warden::Engine engine(*result.policy);
-  warden::ProcessInfo chrome;
+  guardian::Engine engine(*result.policy);
+  guardian::ProcessInfo chrome;
   chrome.path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
   chrome.signingId = "com.google.Chrome";
   chrome.teamId = "EQHXZ8M8AV";
-  warden::Decision decision = engine.evaluate(warden::makeRequest("/Users/bob/.env", chrome));
-  EXPECT_EQ(decision.verdict, warden::Verdict::Deny);
+  guardian::Decision decision = engine.evaluate(guardian::makeRequest("/Users/bob/.env", chrome));
+  EXPECT_EQ(decision.verdict, guardian::Verdict::Deny);
   EXPECT_EQ(decision.ruleId, "secrets-from-browsers-and-ai");
 }
 
