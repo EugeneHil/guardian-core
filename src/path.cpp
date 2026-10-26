@@ -1,9 +1,9 @@
-#include "warden/path.hpp"
+#include "guardian/path.hpp"
 
 #include <cstddef>
 #include <vector>
 
-namespace warden {
+namespace guardian {
 
 namespace {
 
@@ -99,4 +99,4 @@ std::string expandTarget(std::string_view target) {
   return std::string(target);
 }
 
-}  // namespace warden
+}  // namespace guardian

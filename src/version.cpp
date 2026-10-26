@@ -1,7 +1,7 @@
-#include "warden/version.hpp"
+#include "guardian/version.hpp"
 
-namespace warden {
+namespace guardian {
 
-std::string_view coreVersion() noexcept { return WARDEN_CORE_VERSION; }
+std::string_view coreVersion() noexcept { return GUARDIAN_CORE_VERSION; }
 
-}  // namespace warden
+}  // namespace guardian

@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 
+#include <guardian/policy_parser.hpp>
 #include <string>
 #include <utility>
 #include <vector>
-#include <warden/policy_parser.hpp>
 
 namespace {
 
-using warden::describe;
-using warden::parsePolicy;
-using warden::ParseResult;
+using guardian::describe;
+using guardian::parsePolicy;
+using guardian::ParseResult;
 
 using Messages = std::vector<std::string>;
 

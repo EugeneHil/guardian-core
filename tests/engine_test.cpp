@@ -1,23 +1,23 @@
 #include <gtest/gtest.h>
 
+#include <guardian/engine.hpp>
+#include <guardian/policy.hpp>
 #include <string>
-#include <warden/engine.hpp>
-#include <warden/policy.hpp>
 
 #include "test_support.hpp"
 
 namespace {
 
-using warden::AccessRequest;
-using warden::Decision;
-using warden::Engine;
-using warden::makeRequest;
-using warden::makeSpecPolicy;
-using warden::Policy;
-using warden::ProcessInfo;
-using warden::ProcessMatcher;
-using warden::Rule;
-using warden::Verdict;
+using guardian::AccessRequest;
+using guardian::Decision;
+using guardian::Engine;
+using guardian::makeRequest;
+using guardian::makeSpecPolicy;
+using guardian::Policy;
+using guardian::ProcessInfo;
+using guardian::ProcessMatcher;
+using guardian::Rule;
+using guardian::Verdict;
 
 ProcessInfo chrome() {
   ProcessInfo info;
@@ -101,16 +101,16 @@ TEST(Engine, MatcherRequiresAllFields) {
   ProcessInfo other;
   other.teamId = "A";
   other.signingId = "com.y.z";
-  EXPECT_FALSE(warden::matchesProcess(matcher, other));
+  EXPECT_FALSE(guardian::matchesProcess(matcher, other));
   ProcessInfo same;
   same.teamId = "A";
   same.signingId = "com.x.z";
-  EXPECT_TRUE(warden::matchesProcess(matcher, same));
+  EXPECT_TRUE(guardian::matchesProcess(matcher, same));
 }
 
 TEST(Engine, EmptyMatcherNeverMatches) {
-  EXPECT_FALSE(warden::matchesProcess(ProcessMatcher{}, chrome()));
-  EXPECT_FALSE(warden::matchesProcess(ProcessMatcher{}, ProcessInfo{}));
+  EXPECT_FALSE(guardian::matchesProcess(ProcessMatcher{}, chrome()));
+  EXPECT_FALSE(guardian::matchesProcess(ProcessMatcher{}, ProcessInfo{}));
 }
 
 TEST(Engine, EmptyFieldsNeverMatchUnsignedProcess) {
@@ -118,9 +118,9 @@ TEST(Engine, EmptyFieldsNeverMatchUnsignedProcess) {
   team.teamId = "";
   ProcessMatcher prefix;
   prefix.signingIdPrefix = "";
-  EXPECT_FALSE(warden::matchesProcess(team, ProcessInfo{}));
-  EXPECT_FALSE(warden::matchesProcess(prefix, ProcessInfo{}));
-  EXPECT_FALSE(warden::matchesProcess(prefix, chrome()));
+  EXPECT_FALSE(guardian::matchesProcess(team, ProcessInfo{}));
+  EXPECT_FALSE(guardian::matchesProcess(prefix, ProcessInfo{}));
+  EXPECT_FALSE(guardian::matchesProcess(prefix, chrome()));
 }
 
 TEST(Engine, TmpAliasEquivalence) {
@@ -173,7 +173,7 @@ TEST(Engine, PrefilterCandidates) {
 TEST(Engine, FreeEvaluateMatchesEngine) {
   const Policy policy = makeSpecPolicy();
   const AccessRequest request = makeRequest("/Users/bob/.env", chrome());
-  const Decision viaFree = warden::evaluate(policy, request);
+  const Decision viaFree = guardian::evaluate(policy, request);
   const Decision viaEngine = Engine(policy).evaluate(request);
   EXPECT_EQ(viaFree.verdict, viaEngine.verdict);
   EXPECT_EQ(viaFree.ruleId, viaEngine.ruleId);

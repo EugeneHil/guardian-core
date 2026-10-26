@@ -1,5 +1,8 @@
 #include <cstddef>
 #include <cstdint>
+#include <guardian/glob.hpp>
+#include <guardian/path.hpp>
+#include <guardian/policy_parser.hpp>
 #include <initializer_list>
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -9,11 +12,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <warden/glob.hpp>
-#include <warden/path.hpp>
-#include <warden/policy_parser.hpp>
 
-namespace warden {
+namespace guardian {
 
 namespace {
 
@@ -413,4 +413,4 @@ ParseResult parsePolicy(std::string_view json) {
 
 std::string describe(const ValidationError& error) { return error.path + ": " + error.message; }
 
-}  // namespace warden
+}  // namespace guardian
