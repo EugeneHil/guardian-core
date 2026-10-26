@@ -1,5 +1,7 @@
 # ADR-0001: C++ dependencies of guardian-core
 
+> Formerly Warden.
+
 ## Status
 
 Accepted (2026-10-21)

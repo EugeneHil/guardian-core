@@ -42,28 +42,29 @@ def is_code_path(path):
 GROUPS = {
     "text": Group(PATTERN, is_text_path, True),
     "code": Group(PATTERN, is_code_path, True),
-    # Not applicable in warden-core: there is no .gitmodules.
+    # Not applicable in guardian-core: there is no .gitmodules.
     "submodule": Group(PATTERN, lambda path: False, False),
     "all": Group(PATTERN, lambda path: True, True),
 }
 
 # Files exempt from a group because they must spell the old name.
 ALLOW = {
-    "text": {
-        # Recognizes the old shared-ignores marker; dropped once all repos are migrated.
-        "tooling/sync-shared.sh",
-    },
+    "text": set(),
     "code": set(),
     "submodule": set(),
     "all": {
         # Defines the pattern itself.
         "scripts/test_residual_names.py",
-        # Fixture with the old shared-ignores marker.
-        "scripts/test_sync_shared.py",
-        # Recognizes the old shared-ignores marker; dropped once all repos are migrated.
-        "tooling/sync-shared.sh",
     },
 }
+
+
+# A line that is exactly this note is the "formerly" marker under a title; it is exempt everywhere.
+FORMER_NAME_NOTE = "> Formerly Warden."
+
+
+def is_exempt_line(line):
+    return line.strip() == FORMER_NAME_NOTE
 
 
 def tracked_files():
@@ -100,9 +101,30 @@ def offenders(group_name):
         if text is None:
             continue
         for number, line in enumerate(text.splitlines(), 1):
-            if group.pattern.search(line):
+            if group.pattern.search(line) and not is_exempt_line(line):
                 found.append(f"{path}:{number}: {line.strip()}")
     return found
+
+
+class ExemptLine(unittest.TestCase):
+    def test_only_the_exact_note_is_exempt(self):
+        self.assertTrue(is_exempt_line("> Formerly Warden."))
+        self.assertTrue(is_exempt_line("> Formerly Warden.  \n"))
+        self.assertFalse(is_exempt_line("> Formerly Warden. See WARDEN_PORT."))
+        self.assertFalse(is_exempt_line("Formerly Warden."))
+        self.assertFalse(is_exempt_line("> Formerly Warden server."))
+        self.assertFalse(is_exempt_line("Warden"))
+
+
+class AdrNote(unittest.TestCase):
+    def test_every_adr_carries_the_former_name_note(self):
+        missing = [
+            path
+            for path in tracked_files()
+            if path.startswith("docs/adr/") and path.endswith(".md")
+            and FORMER_NAME_NOTE not in (read_text(path) or "").splitlines()[:4]
+        ]
+        self.assertEqual(missing, [], "ADRs without the note under the title")
 
 
 class ResidualNames(unittest.TestCase):
