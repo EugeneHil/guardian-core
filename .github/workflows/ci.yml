@@ -12,7 +12,7 @@ jobs:
   cpp-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install toolchain
         run: brew install ninja llvm
       - name: Configure
@@ -29,7 +29,7 @@ jobs:
   cpp-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Configure
         run: cmake --preset windows
@@ -42,7 +42,7 @@ jobs:
     # Pinned: Python 3.9 availability via setup-python on future ubuntu-latest images is not guaranteed.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: '3.9'
