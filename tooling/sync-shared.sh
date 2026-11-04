@@ -23,31 +23,8 @@ cp "$src/tooling/github/workflows/gitleaks.yml" "$dst/.github/workflows/gitleaks
 [ -f "$dst/.github/dependabot.yml" ] || cp "$src/tooling/github/dependabot.yml" "$dst/.github/dependabot.yml"
 
 marker="# --- guardian shared ignores"
-# Former name of the block (before the Warden -> Guardian rename): replace it once, never duplicate it.
-old_start="# --- warden shared ignores"
-old_end="# --- end warden shared ignores"
 if ! grep -qF "$marker" "$dst/.gitignore" 2>/dev/null; then
-  if grep -qF "$old_start" "$dst/.gitignore" 2>/dev/null; then
-    python3 -I -B - "$dst/.gitignore" "$src/tooling/repo/gitignore.base" "$old_start" "$old_end" <<'PY'
-import sys
-
-path, base, old_start, old_end = sys.argv[1:5]
-with open(path, encoding="utf-8") as fh:
-    lines = fh.read().splitlines(keepends=True)
-with open(base, encoding="utf-8") as fh:
-    block = fh.read()
-start = next(i for i, line in enumerate(lines) if line.startswith(old_start))
-end = next((i for i in range(start, len(lines)) if lines[i].startswith(old_end)), None)
-if end is None:
-    sys.exit("old shared-ignores block has no end marker; fix " + path + " by hand")
-if not block.endswith("\n"):
-    block += "\n"
-with open(path, "w", encoding="utf-8") as fh:
-    fh.write("".join(lines[:start]) + block + "".join(lines[end + 1:]))
-PY
-  else
-    cat "$src/tooling/repo/gitignore.base" >> "$dst/.gitignore"
-  fi
+  cat "$src/tooling/repo/gitignore.base" >> "$dst/.gitignore"
 fi
 
 [ -f "$dst/CLAUDE.md" ] || cp "$src/tooling/repo/CLAUDE.base.md" "$dst/CLAUDE.md"
